@@ -1,0 +1,37 @@
+# Lesson n. 12: Chains
+
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_openai import ChatOpenAI
+
+# Reflection prompt:
+# Prompt for the model to act as a tweet critic, providing feedback and suggestions.
+
+reflection_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+        'system',
+        'You are a viral twitter influencer grading a tweet. Generate critique and recommendations for the user\'s tweet.'
+        'Always provide detailed recommendations, including requests for length, virality, style, etc.',
+        ),
+        MessagesPlaceholder(variable_name='messages'),
+    ]
+)
+
+# Generation prompt:
+# Prompt for the model to act as a tweet generator, creating or revising tweets based on user input and feedback.
+generation_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            'system',
+            'You are a twitter techie influencer assistant tasked with writing excellent twitter posts.'
+            'Generate the best twitter post possible for the user\'s request.'
+            'If the user provides critique, respond with a revised version of your previous attempts.',
+        ),
+        MessagesPlaceholder(variable_name='messages'),
+    ]
+)
+
+llm = ChatOpenAI()
+generate_chain = generation_prompt | llm
+reflection_chain = reflection_prompt | llm
+

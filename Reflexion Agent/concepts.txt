@@ -1,0 +1,21 @@
+Reflexion Agents: It extends the previous example of reflection agent, but this one incorporates tools. Also, the prompt engineering will be revised for the agent to digest the feedback correctly and address and improve through the interactions.
+
+The concept was abstracted from this article: https://arxiv.org/pdf/2303.11366
+
+That can be read in this link: https://blog.langchain.dev/reflection-agents/
+
+Repository of this topic of the course: https://github.com/emarco177/reflexion.git
+
+Here, the agent will give us a very detailed article about a topic that we will give it, and we want the article to dynamically fetch relevant information from the web, and we want to have citations for the reference data and incorporate a quality write critique loop.
+
+The architecture looks similar to the reflection agent. When we start the agent flow, we first have a responder node which is going to respond with the initial response. However, it not only generates the original response, but it also adds critique to the response itself and a search term.
+
+In the search term, the agent is going to come up with ideal search queries that would be beneficial to get a better response. After the search queries, we execute the tools node, which is going to take our search queries and search to retrieve results in real time - tavily.
+
+Then, we're going to downstream the results and go to the revisor node, that takes the initial response, which has an initial critique, and the result of the search engine execution - so it has external data. So it revisits and changes our original response.
+
+Now it's going to do that while incorporating the new data and the critique; the revisor addresses the suggestions that we got in the previous step to the article and supplies a new critique to the new revision of the article, and it's going to provide us new search terms that we want to now look up, according to the revised article that will be beneficial and citations of the first search.
+
+After that, we continue and search for the new queries, downstream the new information alongside with the critique and revise it again, until we hit a stopping condition. 
+
+Section Resources: https://www.udemy.com/course/langgraph/learn/lecture/49845893#learning-tools

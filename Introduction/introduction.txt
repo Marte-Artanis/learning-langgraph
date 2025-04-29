@@ -1,0 +1,78 @@
+LCEL (Leveraging Composability) — An abstraction that facilitates the construction of component chains in LangChain in a minimalist way.
+
+Image n. 1:
+
+a. Decide Output of Step
+b. Decide Which Steps to Take
+c. Determine What Sequences of Steps are Available
+
+1 - Code: a. code / b. code / c. code
+2 - LLM Call (single model): a. LLM (one step only) / b. code / c. code
+3 - Chain (multiple LLM calls): a. LLM (multiple steps) / b. code / c. code
+4 - Router: a. LLM / b. LLM / c. code
+5 - State Machine: a. LLM / b. LLM (with cycles) / c. code
+6 - Agent: a. LLM / b. LLM / c. LLM
+
+Image n. 2 and Image n. 3:
+With LangChain, it is not possible to create cycles — meaning, you cannot return to the original node and reprocess everything again (image 2). With LangGraph, it is possible — enabling flow engineering (image 3).
+
+Comparison:
+Human-Driven (code): not flexible
+Agent-Executed (autonomous): flexible, but less reliable
+In between 1 and 2, we have the LLM Call, where the LLM controls only the output. Then we have Chains, where the output of one LLM call becomes the input of another LLM. After that, there are Routers, where the LLM decides where to go, but there are no cycles yet. Up to this point, LangChain is enough.
+Between the Router and the Agent, there is LangGraph, which introduces agentic systems.
+Definition for the course: an agent is a control flow managed by an LLM.
+The difference between a Chain and an Agent is that a Chain is one-directional, while an Agent can have cycles (loops). Agents also typically perform tool-calling to execute steps.
+
+Basic examples (image 4):
+LLM Call: start → LLM → end
+Chain (example: RAG): question → vectorstore → LLM → answer
+Router: start → LLM → Branch 1 / Branch 2
+Agent: start — step 1 ↔ LLM → step 2 → end (the LLM can decide to go back to step 1 or move to step 2)
+
+Basic design of an agent:
+The simplest design is a for loop, like ReAct. The LLM decides whether to use a tool, calls the tool if needed, receives the result, and decides whether to use another tool or return the answer to the user.
+ReAct agents are very flexible: any state transition is possible. But they suffer from reliability issues. The agent can get stuck in loops, invoking tools over and over again without progressing. Causes include task ambiguity, LLM non-determinism, tool misuse, hallucinations, and others.
+Question: Can we have both flexibility and reliability?
+LangGraph can be the answer. The idea is not to give full freedom to the LLM, but to restrict it along one dimension.
+
+In LangGraph:
+We represent the flow as a graph (nodes and edges).
+It behaves like a state machine, allowing cycles.
+Developers control the flow structure, and the LLM decides where to go and what to execute within that structure.
+This allows us to gain a lot of reliability without losing agentic reasoning capabilities.
+
+Summary:
+Developers define the flow (nodes and edges).
+The LLM operates inside the flow, using conditional branching to decide the next node.
+The system shares state across nodes and edges, saving intermediate results and providing useful information to the LLM to guide decisions.
+
+Graph:
+It's a mathematican object that helps us represent relantionships. It's consist of nodes, also know as vertices, and edges that connect those nodes.
+
+State Machine: 
+It's a model of computation where it consist of state and transion betweenthose stated, and by defi different stated and the rules for the transition between them, than the stated can mange complex condition and sequence in software systems. Can be represented as graphs where the stated are nodes and the transitions are edges. Here is LangGraph: with it we can describe out flows using those nodes and edges, and we can build agentec applicatins.
+
+Flow Engineering: 
+It's a systematic and strategic approach for developing software that will incorporate AI driven decision making process. The goal is to manage and optimaze how AI systems with LLMs handle tasks by defining a clear flow or sequences of operations.This flows are not linear, so they may involve complex decision making nodes where the AI may generate multiple outputs, which are often assessed and refined in an iterative cycle. Flow engineering aims to incorporate systematic planning and testing phase that mimic human development processes, to enhance reliability and functionality of AI solutions. As Developers: we want to define the flow, define the tasks and keep in the context of those tasks, - give the bluepting to follow, we write the states, bit we incorporate LLMs to decide which flow to take based on the input it gets. So the state machine is an engineering decision and no statistics is involved in there.
+
+Nodes: 
+Python functions. This code can be deterministic code - regular python code -, python code that calls an LLM, or LLM agent. It's always receive as an input the current graph state, which is going to have all tge inforoamtion that the nodes needs to do it's work abd what this function returns it's updating the state, so it always return a dictionaty with the keys of what do we want to update in our state.
+
+Edges:
+Connect those nodes within graph's executions, and condi edges are helped to make decisions; whether to go to node A or to node B.
+
+Start and End Nodes: they dont't do anything, so we can think about them as "no operation".
+Start Node: entry points for graph execution.
+End Node: last node that is going to be executed.
+
+State of Agent State:
+Dictionary that have information that's importatnt for us to keep track in the graph, maybe some nodes execution results, maybe some temporary results, or even our chat history. It is local to the graph, available for eveyr node to access within graphs execution and on each edge and it can be local. Sp within out graphs execution in out runtime, homever, we can also persist it into persistent storage.
+
+The result: Every node is going to update the state and the condition edges and edges are going to rely on the state whether go to node A or to node B.
+
+Cyclic Graph: loops.
+Human In the Loop: feedback of humans that will decide where do we need to go in the graph execution.
+Persistence's State
+
+Course GitHub Repository: https://github.com/emarco177/langgraph-course.git

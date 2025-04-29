@@ -1,0 +1,10 @@
+# Requirements for Reflexion Agent
+aiohappyeyeballs>=2.4.3
+aiohttp>=3.11.2
+langchain>=0.1.0
+langchain-core>=0.1.0
+langgraph>=0.0.1
+python-dotenv>=1.0.0
+tavily-python>=0.3.0
+openai>=1.0.0
+typing-extensions>=4.5.0 

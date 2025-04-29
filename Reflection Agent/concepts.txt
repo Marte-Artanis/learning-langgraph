@@ -1,0 +1,4 @@
+Reflection Agents: LLm reflects on it's past actions, learning and improving over time.
+ChatPromptTemplate: hold content that we'll send as humans or that we'll recieve back from the LLM as an answear.
+MessagesPlaceholder: lets us store the messages in the state - future messager that we'll going to get.
+MessageGraph: type of graph that its state is simply a sequence of messages, and in this graph, every node receive as an input a list of messages, and the output is going to be one or a couple of message. In resume: takes the output and append it to the state.
