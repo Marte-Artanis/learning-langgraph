@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
-from schemas import AnswerQuestion
+from schemas import AnswerQuestion, ReviseAnswer
 
 llm = ChatOpenAI(model="gpt-4o")
 
@@ -43,7 +43,7 @@ actor_prompt_template = ChatPromptTemplate.from_messages(
         MessagesPlaceholder(variable_name="messages"),
         ("system", "Answer the user's question above using the required format."),
     ]
-).partial(time=lambda: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    ).partial(time=lambda: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 # The parcial method populate the placeholders, because when we invoke the prompt template, we want plug in the current time and the lambda function do that.
 
@@ -52,7 +52,13 @@ actor_prompt_template = ChatPromptTemplate.from_messages(
 # We want the critique field, which is having the critique for that essay, and we want a search field,
 # which will be a list of values that we should search for.
 
-first_responder_prompt_template = actor_prompt_template.partial(first_instruction="Provide a detailed ~250 word answer.")
+first_responder_prompt_template = actor_prompt_template.partial(
+    first_instruction="""Provide a detailed ~250 word answer.
+    Your response MUST include:
+    1. answer: Your detailed answer
+    2. reflection: Your critique of the answer
+    3. search_queries: 1-3 queries for further research"""
+    )
 
 # Let's now create the first responder chain which is going to take our prompt template.
 # And it's going to pipe it into the LLM GPT.
@@ -61,7 +67,56 @@ first_responder_prompt_template = actor_prompt_template.partial(first_instructio
 # And this is a cool technique where the grounding of the LM also comes from the Pydantic object we created.
 # So this way we are going to make the LLM give us exactly the response that we want.
 
-first_responder = first_responder_prompt_template | llm.bind_tools(tools=[AnswerQuestion], tool_choice="AnswerQuestion")
+first_responder = first_responder_prompt_template | llm.bind_tools(
+    tools=[AnswerQuestion], tool_choice="AnswerQuestion"
+    )
+
+revise_instructions = """
+    Revise your previous answer using the new information.
+    - You should use the previous critique to add important information to your answer.
+        - You MUST include numerical citations in your revised answer to ensure it can be verified.
+        - Add a "References" section to the bottom of your answer (which does not count towards the word limit). In form of:
+            - [1] https://example.com
+            - [2] https://example.com
+    - You should use the previous critique to remove superfluous information from your answer and make SURE it is not more than 250 words.
+    - You MUST include:
+        1. answer: Your revised answer
+        2. reflection: Your critique of the revised answer
+        3. search_queries: 1-3 queries for further research
+    """
+
+# Revisor Configuration: This component uses the language model to review previous responses.
+# - Uses ReviseAnswer as a tool to ensure the output follows the defined Pydantic schema
+# - The tool_choice="ReviseAnswer" parameter forces the LLM to specifically use this tool
+# - This ensures the response is structured according to the expected ReviseAnswer class format
+revisor = actor_prompt_template.partial(
+    first_instruction=revise_instructions
+) | llm.bind_tools(tools=[ReviseAnswer], tool_choice="ReviseAnswer")
+
+"""
+Revisor Node Overview:
+---------------------
+This node implements a sophisticated revision process that enhances the initial response through multiple steps:
+
+1. Input Processing:
+   - Takes the original article
+   - Incorporates the previously generated critique
+   - Integrates search results from Tavily search engine
+
+2. Revision Process:
+   - Analyzes the critique to identify areas for improvement
+   - Incorporates relevant information from search results
+   - Maintains the 250-word limit while enhancing content quality
+
+3. Output Enhancement:
+   - Adds numerical citations for all referenced sources
+   - Includes a "References" section with proper URL formatting
+   - Ensures factual accuracy through verified sources
+
+The revisor uses the ReviseAnswer Pydantic model to structure the output, ensuring
+consistent formatting and complete information in the final response.
+"""
+
 
 if __name__ == '__main__':
     human_message = HumanMessage(
@@ -72,4 +127,6 @@ if __name__ == '__main__':
 
     res = chain.invoke({"messages": [human_message]})
     print(res)
+
+
 

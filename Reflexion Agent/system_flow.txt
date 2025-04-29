@@ -1,0 +1,50 @@
+Fluxo do Sistema de Reflexão e Revisão
+=====================================
+
+1. Entrada Inicial
+   ├── Usuário fornece um tópico para pesquisa
+   └── O sistema inicia com o first_responder_prompt_template
+       - Instrução: "Provide a detailed ~250 word answer"
+       - Usa o modelo GPT-4
+       - Força o uso da ferramenta AnswerQuestion
+
+2. Primeira Resposta (First Responder)
+   ├── Gera uma resposta inicial (~250 palavras)
+   ├── Cria uma crítica severa da própria resposta
+   └── Gera 1-3 queries de pesquisa para melhorar o conteúdo
+   └── Estrutura a saída usando o schema AnswerQuestion
+
+3. Busca de Informações
+   ├── Usa as queries geradas para buscar no Tavily
+   └── Coleta informações adicionais relevantes
+
+4. Revisão (Revisor Node)
+   ├── Entrada:
+   │   ├── Artigo original
+   │   ├── Crítica gerada
+   │   └── Resultados da busca Tavily
+   │
+   ├── Processo de Revisão:
+   │   ├── Analisa a crítica
+   │   ├── Incorpora informações da busca
+   │   └── Mantém limite de 250 palavras
+   │
+   └── Saída:
+       ├── Artigo revisado
+       ├── Citações numéricas
+       └── Seção de Referências
+
+5. Estrutura dos Prompts
+   ├── actor_prompt_template (Base)
+   │   ├── Sistema: "You are a expert researcher"
+   │   ├── Tempo atual
+   │   ├── Instruções específicas
+   │   └── Histórico de mensagens
+   │
+   ├── first_responder_prompt_template
+   │   └── Extensão do actor_prompt_template
+   │       └── Foco em gerar resposta inicial
+   │
+   └── revisor_prompt_template
+       └── Extensão do actor_prompt_template
+           └── Foco em revisão e citações
