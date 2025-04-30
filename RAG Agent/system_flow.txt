@@ -1,0 +1,118 @@
+# Fluxo do Sistema RAG Agent
+======================
+
+1. Entrada Inicial (main.py)
+   ├── Usuário fornece uma pergunta
+   └── Sistema inicializa o estado
+       ├── question: pergunta do usuário
+       ├── documents: []
+       ├── web_search: false
+       └── generation: ""
+
+2. Roteamento (graph/nodes/route_question.py)
+   ├── Recebe o estado inicial
+   ├── Analisa a pergunta usando router_chain
+   └── Decide o próximo passo
+       ├── RETRIEVE: busca em documentos locais
+       └── WEBSEARCH: necessita busca na web
+
+3. Busca de Documentos (graph/nodes/retrieve.py)
+   ├── Entrada:
+   │   ├── Estado com pergunta
+   │   └── Configuração do retriever
+   │
+   ├── Processo:
+   │   ├── Verifica documentos existentes
+   │   ├── Busca usando embeddings
+   │   └── Calcula similaridade semântica
+   │
+   └── Saída:
+       └── Estado atualizado com documentos
+
+4. Avaliação de Documentos (graph/nodes/grade_documents.py)
+   ├── Entrada:
+   │   ├── Documentos recuperados
+   │   └── Pergunta original
+   │
+   ├── Processo:
+   │   ├── Avalia relevância
+   │   └── Calcula scores
+   │
+   └── Decisão:
+       ├── Documentos suficientes -> GENERATE
+       └── Necessita mais contexto -> WEBSEARCH
+
+5. Busca Web [Opcional] (graph/nodes/web_search.py)
+   ├── Ativado se:
+   │   ├── Decisão do router
+   │   └── OU documentos insuficientes
+   │
+   ├── Processo:
+   │   ├── Busca na web
+   │   └── Processa resultados
+   │
+   └── Atualiza estado com novos documentos
+
+6. Geração (graph/nodes/generate.py)
+   ├── Entrada:
+   │   ├── Documentos relevantes
+   │   └── Pergunta original
+   │
+   ├── Processo:
+   │   ├── Prepara contexto
+   │   └── Gera resposta via LLM
+   │
+   └── Saída:
+       └── Estado com resposta gerada
+
+7. Verificação (graph/nodes/grade_generation.py)
+   ├── Entrada:
+   │   ├── Resposta gerada
+   │   ├── Documentos fonte
+   │   └── Pergunta original
+   │
+   ├── Verificações:
+   │   ├── Fundamentação nos documentos
+   │   └── Relevância para pergunta
+   │
+   └── Decisão:
+       ├── Resposta válida -> END
+       └── Necessita revisão -> GENERATE
+
+Componentes do Sistema
+==================
+
+1. Estado (graph/state.py)
+   ├── TypedDict com Annotated
+   └── Campos principais:
+       ├── question: str
+       ├── documents: List[Document]
+       ├── web_search: bool
+       └── generation: str
+
+2. Grafo (graph/graph.py)
+   ├── Configuração do fluxo
+   ├── Conexões entre nós
+   └── Lógica de transição
+
+3. Chains (graph/chains/)
+   ├── generation_chain
+   │   └── Geração de respostas
+   ├── grading_chain
+   │   └── Avaliação de qualidade
+   └── router_chain
+       └── Decisões de roteamento
+
+4. Constantes (graph/consts.py)
+   ├── Nomes dos nós
+   ├── Estados do sistema
+   └── Configurações gerais
+
+## Fluxo de Dados:
+question -> route -> retrieve -> grade -> [web_search] -> generate -> check -> response
+
+## Características Importantes:
+1. Modular: cada nó tem responsabilidade única
+2. Flexível: pode incluir ou remover etapas
+3. Controlado: estado bem definido entre transições
+4. Verificável: múltiplas etapas de validação 
